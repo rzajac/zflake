@@ -120,7 +120,7 @@ func Test_Gen_NextSID_DecodeFID(t *testing.T) {
 	sid0 := flk.NextSID()
 
 	// --- Then ---
-	assert.Exactly(t, "18OWG", sid0)
+	assert.Exactly(t, "BIYgQ", sid0)
 
 	fid0, err := DecodeSID(sid0)
 	assert.NoError(t, err)
@@ -128,7 +128,7 @@ func Test_Gen_NextSID_DecodeFID(t *testing.T) {
 }
 
 func Test_EncodeFID(t *testing.T) {
-	assert.Exactly(t, "18OWG", EncodeFID(0x1000000))
+	assert.Exactly(t, "BIYgQ", EncodeFID(0x1000000))
 }
 
 func Benchmark_zflake_fid(b *testing.B) {

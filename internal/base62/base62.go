@@ -5,8 +5,8 @@ import (
 	"unsafe"
 )
 
-// alpha represents base62 alphabet [0-9][A-Z][a-z].
-const alpha = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+// alpha represents base62 alphabet [A-Z][a-z][0-9].
+const alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 
 // Number of characters in the alphabet.
 const base = 62

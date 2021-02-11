@@ -144,7 +144,7 @@ func (gen *Gen) NextFID() uint64 {
 		uint64(gen.gid)
 }
 
-// NextSID returns zflake id encoded using Base62 [0-9][A-Z][a-z].
+// NextSID returns zflake id encoded using Base62 [A-Z][a-z][0-9].
 func (gen *Gen) NextSID() string {
 	return base62.Encode(gen.NextFID())
 }

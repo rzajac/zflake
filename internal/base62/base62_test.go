@@ -29,6 +29,18 @@ func Test_Encode_Decode(t *testing.T) {
 	}
 }
 
+func Test_Encode_Zero(t *testing.T) {
+	// --- When ---
+	sid := Encode(0)
+
+	// --- Then ---
+	assert.Exactly(t, "0", sid)
+
+	fid, err := Decode("0")
+	assert.NoError(t, err)
+	assert.Exactly(t, uint64(0), fid)
+}
+
 func BenchmarkBase62Encode(b *testing.B) {
 	id := uint64(59061089258255360)
 	b.ReportAllocs()

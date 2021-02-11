@@ -22,6 +22,9 @@ func init() {
 
 // Encode encodes uint64 number as base62 string.
 func Encode(id uint64) string {
+	if id == 0 {
+		return "0"
+	}
 	n := int(math.Log(float64(id))/math.Log(base) + 1)
 	buf := make([]byte, n)
 	r := id % base

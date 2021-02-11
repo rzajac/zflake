@@ -10,17 +10,18 @@ The `zflake` was created mainly to be able to generate great number of unique
 uint64 IDs in bursts. In fact the number of distributed generators
 was less important than the ability to create a lot of IDs in a short time.
 
-The `zflake` bits assignment in uint64 is as follows:
+The `zflake` bit assignment in uint64 is as follows:
 
     39 bits for time in units of 10 msec
     16 bits for a sequence number
      8 bits for a generator ID (GID)
 
-Above bit assigment dictate following `zflake` properties:
+`zflake` properties:
 
 - The lifetime of 174 years since the start of `zflake` epoch.
 - Can generate at most 2^16 IDs per 10ms for each generator ID.
 - Only 2^8 generators.
+- Ability to generate Base62 string representations of uint64 IDs. 
 
 ## Installation
 
@@ -48,17 +49,19 @@ Example:
 
 ```
 gen := zflake.NewGen(zflake.GID(42), zflake.Epoch(time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)))
-fid := gen.NextID()
+fid := gen.NextFID() // Generate unique uint64 ID.
+sid := gen.NextSID() // Generate unique Base62 encoded ID.
 ```
 
 By default `zflake` uses `2020-01-01T00:00:00Z` as an epoch.
 
-When 39 bit space for time buckets (10ms) runs out `NextID` will **panic**.
+When 39 bit space for time buckets (10ms) runs out `NextFID` and `NextSID` 
+will **panic**.
 
 ## Decode `zflake` ID
 
 ```
-parts := zflake.Decode(59061089258255360)
+parts := zflake.DecodeFID(59061089258255360)
 fmt.Println(parts) // map[fid:59061089258255360 gid:0 msb:0 seq:18740 tim:3520315245]
 ```
 
@@ -66,7 +69,8 @@ fmt.Println(parts) // map[fid:59061089258255360 gid:0 msb:0 seq:18740 tim:352031
 
 ```
 Benchmark_zflake
-Benchmark_zflake-12    	 7974894      155 ns/op      0 B/op      0 allocs/op
+Benchmark_zflake_fid-12     7974894      155 ns/op      0 B/op      0 allocs/op
+Benchmark_zflake_sid-12     6168337      200 ns/op     16 B/op      1 allocs/op
 ```
 
 ## License

@@ -19,12 +19,12 @@ func Test_NewGen(t *testing.T) {
 	flk := NewGen(Clock(clk))
 
 	// --- When ---
-	fid0 := flk.NextID()
+	fid0 := flk.NextFID()
 
 	// --- Then ---
 	assert.NotNil(t, flk)
 
-	parts := Decode(fid0)
+	parts := DecodeFID(fid0)
 	assert.Exactly(t, uint64(0x1000000), parts["fid"])
 	assert.Exactly(t, uint64(0), parts["msb"])
 	assert.Exactly(t, uint64(1), parts["tim"])
@@ -37,12 +37,12 @@ func Test_NewGen_setGID(t *testing.T) {
 	flk := NewGen(GID(42))
 
 	// --- When ---
-	fid0 := flk.NextID()
+	fid0 := flk.NextFID()
 
 	// --- Then ---
 	assert.NotNil(t, flk)
 
-	parts := Decode(fid0)
+	parts := DecodeFID(fid0)
 	assert.Exactly(t, uint64(42), parts["gid"])
 }
 
@@ -54,7 +54,7 @@ func Test_NewGen_epochInTheFuture(t *testing.T) {
 	assert.Nil(t, flk)
 }
 
-func Test_Gen_NextID_outOfTime(t *testing.T) {
+func Test_Gen_NextFID_outOfTime(t *testing.T) {
 	// --- Given ---
 	epoch := time.Unix(0, DefaultEpoch)
 
@@ -72,10 +72,10 @@ func Test_Gen_NextID_outOfTime(t *testing.T) {
 
 	// --- When ---
 	// Able to generate one ID but the next clock tick goes over the limit.
-	flk.NextID()
+	flk.NextFID()
 
 	// --- Then ---
-	assert.Panics(t, func() { flk.NextID() })
+	assert.Panics(t, func() { flk.NextFID() })
 }
 
 func Test_Gen_parallel(t *testing.T) {
@@ -93,7 +93,7 @@ func Test_Gen_parallel(t *testing.T) {
 	for i := 0; i < generators; i++ {
 		go func() {
 			for i := 0; i < idPerGen; i++ {
-				fidC <- flk.NextID()
+				fidC <- flk.NextFID()
 			}
 		}()
 	}
@@ -108,7 +108,26 @@ func Test_Gen_parallel(t *testing.T) {
 	assert.Exactly(t, idPerGen*generators, len(set))
 }
 
-func Benchmark_zflake(b *testing.B) {
+func Test_Gen_NextSID_DecodeSID(t *testing.T) {
+	// --- Given ---
+	clk := clock.Deterministic(
+		time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
+		time.Millisecond,
+	)
+	flk := NewGen(Clock(clk))
+
+	// --- When ---
+	sid0 := flk.NextSID()
+
+	// --- Then ---
+	assert.Exactly(t, "18OWG", sid0)
+
+	fid0, err := DecodeSID(sid0)
+	assert.NoError(t, err)
+	assert.Exactly(t, uint64(0x1000000), fid0)
+}
+
+func Benchmark_zflake_fid(b *testing.B) {
 	b.StopTimer()
 	flk := NewGen()
 	var id uint64
@@ -116,7 +135,20 @@ func Benchmark_zflake(b *testing.B) {
 	b.ReportAllocs()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		id = flk.NextID()
+		id = flk.NextFID()
+	}
+	_ = id
+}
+
+func Benchmark_zflake_sid(b *testing.B) {
+	b.StopTimer()
+	flk := NewGen()
+	var id string
+
+	b.ReportAllocs()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		id = flk.NextSID()
 	}
 	_ = id
 }

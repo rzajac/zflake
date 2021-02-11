@@ -19,6 +19,8 @@ import (
 	"time"
 
 	"github.com/rzajac/clock"
+
+	"github.com/rzajac/zflake/internal/base62"
 )
 
 const (
@@ -112,9 +114,9 @@ func NewGen(opts ...func(*Gen)) *Gen {
 	return gen
 }
 
-// NextID generates a next unique ID.
-// When 39 bit space for time buckets runs out NextID will panic.
-func (gen *Gen) NextID() uint64 {
+// NextFID generates a next unique ID.
+// When 39 bit space for time buckets runs out NextFID will panic.
+func (gen *Gen) NextFID() uint64 {
 	gen.mx.Lock()
 	defer gen.mx.Unlock()
 
@@ -142,6 +144,11 @@ func (gen *Gen) NextID() uint64 {
 		uint64(gen.gid)
 }
 
+// NextSID returns zflake id encoded using Base62 [0-9][A-Z][a-z].
+func (gen *Gen) NextSID() string {
+	return base62.Encode(gen.NextFID())
+}
+
 // bucketsSince returns number of time buckets elapsed between the epoch and tim.
 func (gen *Gen) bucketsSince(tim time.Time) uint64 {
 	return uint64((tim.UTC().UnixNano() - gen.epochns) / BucketLen)
@@ -155,8 +162,8 @@ func (gen *Gen) sleep() {
 	time.Sleep(sleep)
 }
 
-// Decode decodes zflake ID.
-func Decode(fid uint64) map[string]uint64 {
+// DecodeFID decodes zflake ID.
+func DecodeFID(fid uint64) map[string]uint64 {
 	msb := fid >> 63
 	tim := fid >> (BitLenSeq + BitLenGID)
 	seq := fid & maskSeq >> BitLenGID
@@ -168,4 +175,9 @@ func Decode(fid uint64) map[string]uint64 {
 		"seq": seq,
 		"gid": gid,
 	}
+}
+
+// DecodeSID decodes Base62 representation of the zflake ID back to uint64.
+func DecodeSID(sid string) (uint64, error) {
+	return base62.Decode(sid)
 }

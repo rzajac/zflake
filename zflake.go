@@ -177,6 +177,11 @@ func DecodeFID(fid uint64) map[string]uint64 {
 	}
 }
 
+// EncodeFID returns Base62 string representation of the zflake ID.
+func EncodeFID(fid uint64) string {
+	return base62.Encode(fid)
+}
+
 // DecodeSID decodes Base62 representation of the zflake ID back to uint64.
 func DecodeSID(sid string) (uint64, error) {
 	return base62.Decode(sid)

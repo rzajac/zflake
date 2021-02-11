@@ -108,7 +108,7 @@ func Test_Gen_parallel(t *testing.T) {
 	assert.Exactly(t, idPerGen*generators, len(set))
 }
 
-func Test_Gen_NextSID_DecodeSID(t *testing.T) {
+func Test_Gen_NextSID_DecodeFID(t *testing.T) {
 	// --- Given ---
 	clk := clock.Deterministic(
 		time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
@@ -125,6 +125,10 @@ func Test_Gen_NextSID_DecodeSID(t *testing.T) {
 	fid0, err := DecodeSID(sid0)
 	assert.NoError(t, err)
 	assert.Exactly(t, uint64(0x1000000), fid0)
+}
+
+func Test_EncodeFID(t *testing.T) {
+	assert.Exactly(t, "18OWG", EncodeFID(0x1000000))
 }
 
 func Benchmark_zflake_fid(b *testing.B) {

@@ -1,6 +1,7 @@
 package base62
 
 import (
+	"errors"
 	"math"
 	"unsafe"
 )
@@ -10,6 +11,9 @@ const alpha = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
 // Number of characters in the alphabet.
 const base = 62
+
+// ErrInvalidSID an error decoding string representation of the zflake.
+var ErrInvalidSID = errors.New("invalid zflake string representation")
 
 // alphabetMap maps base62 alphabet rune to its index.
 var alphabetMap = make(map[rune]int, base)
@@ -43,7 +47,12 @@ func Encode(id uint64) string {
 func Decode(str string) (uint64, error) {
 	res := uint64(0)
 	for i := 0; i < len(str); i++ {
-		res = base*res + uint64(alphabetMap[rune(str[i])])
+		r := rune(str[i])
+		v, ok := alphabetMap[r]
+		if !ok {
+			return 0, ErrInvalidSID
+		}
+		res = base*res + uint64(v)
 	}
 	return res, nil
 }

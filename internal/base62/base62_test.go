@@ -8,25 +8,38 @@ import (
 
 func Test_Encode_Decode(t *testing.T) {
 	tt := []struct {
+		sid string
 		fid uint64
-		exp string
 	}{
-		{59061089258255360, "4MV1b01dcO"},
-		{89569285645, "1ZlfarV"},
+		{"4MV1b01dcO", 59061089258255360},
+		{"1ZlfarV", 89569285645},
+		{"pt0", 0x30b1e},
+		{"pt1", 0x30b1f},
+		{"pt2", 0x30b20},
+		{"18OWH", 0x1000001},
 	}
 
 	for _, tc := range tt {
-		t.Run(tc.exp, func(t *testing.T) {
+		t.Run(tc.sid, func(t *testing.T) {
 			// --- When ---
+			fid, err := Decode(tc.sid)
 			sid := Encode(tc.fid)
-			fid, err := Decode(sid)
 
 			// --- Then ---
 			assert.NoError(t, err)
-			assert.Exactly(t, tc.exp, sid)
 			assert.Exactly(t, tc.fid, fid)
+			assert.Exactly(t, tc.sid, sid)
 		})
 	}
+}
+
+func Test_Decode_checkAlphabet(t *testing.T) {
+	// --- When ---
+	fid, err := Decode("%%%")
+
+	// --- Then ---
+	assert.ErrorIs(t, err, ErrInvalidSID)
+	assert.Exactly(t, uint64(0), fid)
 }
 
 func Test_Encode_Zero(t *testing.T) {

@@ -64,9 +64,6 @@ func Test_Gen_NextFID_outOfTime(t *testing.T) {
 	endTimeNS := epoch.UTC().UnixNano() + int64(endBucket)*BucketLen
 	endTime := time.Unix(0, endTimeNS)
 
-	a := endTime.UTC().UnixNano() - epoch.UTC().UnixNano()
-	fmt.Println(int64(time.Duration(a).Hours()))
-
 	clk := clock.Deterministic(endTime, 10*time.Millisecond)
 	flk := NewGen(Clock(clk))
 

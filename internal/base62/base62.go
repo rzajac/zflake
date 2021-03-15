@@ -24,8 +24,8 @@ func init() {
 	}
 }
 
-// Encode encodes uint64 number as base62 string.
-func Encode(id uint64) string {
+// Encode encodes int64 number as base62 string.
+func Encode(id int64) string {
 	if id == 0 {
 		return "0"
 	}
@@ -43,16 +43,16 @@ func Encode(id uint64) string {
 	return *(*string)(unsafe.Pointer(&buf))
 }
 
-// Decode decodes base62 string to uint64.
-func Decode(str string) (uint64, error) {
-	res := uint64(0)
+// Decode decodes base62 string to int64.
+func Decode(str string) (int64, error) {
+	res := int64(0)
 	for i := 0; i < len(str); i++ {
 		r := rune(str[i])
 		v, ok := alphabetMap[r]
 		if !ok {
 			return 0, ErrInvalidSID
 		}
-		res = base*res + uint64(v)
+		res = base*res + int64(v)
 	}
 	return res, nil
 }

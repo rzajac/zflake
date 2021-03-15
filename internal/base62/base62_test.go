@@ -9,7 +9,7 @@ import (
 func Test_Encode_Decode(t *testing.T) {
 	tt := []struct {
 		sid string
-		fid uint64
+		fid int64
 	}{
 		{"4MV1b01dcO", 59061089258255360},
 		{"1ZlfarV", 89569285645},
@@ -39,7 +39,7 @@ func Test_Decode_checkAlphabet(t *testing.T) {
 
 	// --- Then ---
 	assert.ErrorIs(t, err, ErrInvalidSID)
-	assert.Exactly(t, uint64(0), fid)
+	assert.Exactly(t, int64(0), fid)
 }
 
 func Test_Encode_Zero(t *testing.T) {
@@ -51,11 +51,11 @@ func Test_Encode_Zero(t *testing.T) {
 
 	fid, err := Decode("0")
 	assert.NoError(t, err)
-	assert.Exactly(t, uint64(0), fid)
+	assert.Exactly(t, int64(0), fid)
 }
 
 func BenchmarkBase62Encode(b *testing.B) {
-	id := uint64(59061089258255360)
+	id := int64(59061089258255360)
 	b.ReportAllocs()
 	var sid string
 	for i := 0; i < b.N; i++ {
@@ -66,7 +66,7 @@ func BenchmarkBase62Encode(b *testing.B) {
 
 func BenchmarkBase62Decode(b *testing.B) {
 	var err error
-	var dec uint64
+	var dec int64
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {

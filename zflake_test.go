@@ -25,11 +25,11 @@ func Test_NewGen(t *testing.T) {
 	assert.NotNil(t, flk)
 
 	parts := DecodeFID(fid0)
-	assert.Exactly(t, uint64(0x1000000), parts["fid"])
-	assert.Exactly(t, uint64(0), parts["msb"])
-	assert.Exactly(t, uint64(1), parts["tim"])
-	assert.Exactly(t, uint64(0), parts["seq"])
-	assert.Exactly(t, uint64(0), parts["gid"])
+	assert.Exactly(t, int64(0x1000000), parts["fid"])
+	assert.Exactly(t, int64(0), parts["msb"])
+	assert.Exactly(t, int64(1), parts["tim"])
+	assert.Exactly(t, int64(0), parts["seq"])
+	assert.Exactly(t, int64(0), parts["gid"])
 }
 
 func Test_NewGen_setGID(t *testing.T) {
@@ -43,7 +43,7 @@ func Test_NewGen_setGID(t *testing.T) {
 	assert.NotNil(t, flk)
 
 	parts := DecodeFID(fid0)
-	assert.Exactly(t, uint64(42), parts["gid"])
+	assert.Exactly(t, int64(42), parts["gid"])
 }
 
 func Test_NewGen_epochInTheFuture(t *testing.T) {
@@ -61,7 +61,7 @@ func Test_Gen_NextFID_outOfTime(t *testing.T) {
 	// Last possible bucket.
 	endBucket := maskTim >> (BitLenSeq + BitLenGID)
 	// Last bucket start time.
-	endTimeNS := epoch.UTC().UnixNano() + int64(endBucket)*BucketLen
+	endTimeNS := epoch.UTC().UnixNano() + endBucket*BucketLen
 	endTime := time.Unix(0, endTimeNS)
 
 	clk := clock.Deterministic(endTime, 10*time.Millisecond)
@@ -72,7 +72,7 @@ func Test_Gen_NextFID_outOfTime(t *testing.T) {
 	flk.NextFID()
 
 	// --- Then ---
-	assert.Panics(t, func() { flk.NextFID() })
+	assert.PanicsWithValue(t, "over the time limit", func() { flk.NextFID() })
 }
 
 func Test_Gen_parallel(t *testing.T) {
@@ -80,13 +80,13 @@ func Test_Gen_parallel(t *testing.T) {
 	generators := 500
 	idPerGen := 10000
 	totalIDs := generators * idPerGen
-	set := make(map[uint64]struct{}, totalIDs)
+	set := make(map[int64]struct{}, totalIDs)
 
 	// --- When ---
 	flk := NewGen()
 
 	// --- Then ---
-	fidC := make(chan uint64, 1000)
+	fidC := make(chan int64, 1000)
 	for i := 0; i < generators; i++ {
 		go func() {
 			for i := 0; i < idPerGen; i++ {
@@ -121,7 +121,7 @@ func Test_Gen_NextSID_DecodeFID(t *testing.T) {
 
 	fid0, err := DecodeSID(sid0)
 	assert.NoError(t, err)
-	assert.Exactly(t, uint64(0x1000000), fid0)
+	assert.Exactly(t, int64(0x1000000), fid0)
 }
 
 func Test_EncodeFID(t *testing.T) {
@@ -131,7 +131,7 @@ func Test_EncodeFID(t *testing.T) {
 func Benchmark_zflake_fid(b *testing.B) {
 	b.StopTimer()
 	flk := NewGen()
-	var id uint64
+	var id int64
 
 	b.ReportAllocs()
 	b.StartTimer()
@@ -154,10 +154,10 @@ func Benchmark_zflake_sid(b *testing.B) {
 	_ = id
 }
 
-// printUint64 prints binary representation of uint64 number.
-func printUint64(fid uint64) {
+// printInt64 prints binary representation of int64 number.
+func printInt64(fid int64) {
 	buf := make([]byte, 8)
-	binary.BigEndian.PutUint64(buf, fid)
+	binary.BigEndian.PutUint64(buf, uint64(fid))
 	ret := ""
 	for i, b := range buf {
 		ret += fmt.Sprintf("%08b ", b)
@@ -171,10 +171,10 @@ func printUint64(fid uint64) {
 	fmt.Println(ret)
 }
 
-// printUint64 prints binary representation of uint64 number.
-func printUint64Hex(fid uint64) {
+// printInt64 prints binary representation of int64 number.
+func printInt64Hex(fid int64) {
 	buf := make([]byte, 8)
-	binary.BigEndian.PutUint64(buf, fid)
+	binary.BigEndian.PutUint64(buf, uint64(fid))
 	ret := ""
 	for i, b := range buf {
 		ret += fmt.Sprintf("%02X ", b)

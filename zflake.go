@@ -46,10 +46,9 @@ const (
 
 // Bit masks.
 const (
-	maskTim = uint64((1<<(BitLenTim) - 1) << (BitLenSeq + BitLenGID))
-	maskSeq = uint64((1<<BitLenSeq - 1) << BitLenGID)
-	maskGID = uint64(1<<BitLenGID - 1)
-	maskMSB = uint64(1 << (BitLenTim + BitLenSeq + BitLenGID))
+	maskTim = int64((1<<(BitLenTim) - 1) << (BitLenSeq + BitLenGID))
+	maskSeq = int64((1<<BitLenSeq - 1) << BitLenGID)
+	maskGID = int64(1<<BitLenGID - 1)
 )
 
 // GID is Gen constructor option setting generator ID.
@@ -65,7 +64,7 @@ func GID(mid byte) func(*Gen) {
 // Epoch is Gen constructor option setting zflake epoch.
 func Epoch(epoch time.Time) func(*Gen) {
 	return func(flake *Gen) {
-		flake.epoch = uint64(DefaultEpoch / BucketLen)
+		flake.epoch = DefaultEpoch / BucketLen
 		flake.epochns = epoch.UTC().UnixNano()
 	}
 }
@@ -81,10 +80,10 @@ func Clock(clk clock.Clock) func(*Gen) {
 
 // Gen represents distributed unique ID generator.
 type Gen struct {
-	epoch   uint64      // Number of zflake time buckets since Unix Epoch.
+	epoch   int64       // Number of zflake time buckets since Unix Epoch.
 	epochns int64       // Generator epoch as nanoseconds.
 	gid     byte        // Generator ID.
-	bucket  uint64      // Current 10ms time bucket since epoch.
+	bucket  int64       // Current 10ms time bucket since epoch.
 	seq     uint16      // Number of generated IDs in current time bucket.
 	now     clock.Clock // Function returning current time.
 	mx      *sync.Mutex // Guards generator.
@@ -105,7 +104,7 @@ func NewGen(opts ...func(*Gen)) *Gen {
 	}
 
 	if gen.epoch == 0 {
-		gen.epoch = uint64(DefaultEpoch / BucketLen)
+		gen.epoch = DefaultEpoch / BucketLen
 		gen.epochns = DefaultEpoch
 	} else if gen.epochns > gen.now().UTC().UnixNano() {
 		return nil
@@ -116,7 +115,7 @@ func NewGen(opts ...func(*Gen)) *Gen {
 
 // NextFID generates a next unique ID.
 // When 39 bit space for time buckets runs out NextFID will panic.
-func (gen *Gen) NextFID() uint64 {
+func (gen *Gen) NextFID() int64 {
 	gen.mx.Lock()
 	defer gen.mx.Unlock()
 
@@ -140,8 +139,8 @@ func (gen *Gen) NextFID() uint64 {
 	}
 
 	return gen.bucket<<(BitLenSeq+BitLenGID) |
-		uint64(gen.seq)<<BitLenGID |
-		uint64(gen.gid)
+		int64(gen.seq)<<BitLenGID |
+		int64(gen.gid)
 }
 
 // NextSID returns zflake id encoded using Base62 [0-9][A-Z][a-z].
@@ -150,25 +149,25 @@ func (gen *Gen) NextSID() string {
 }
 
 // bucketsSince returns number of time buckets elapsed between the epoch and tim.
-func (gen *Gen) bucketsSince(tim time.Time) uint64 {
-	return uint64((tim.UTC().UnixNano() - gen.epochns) / BucketLen)
+func (gen *Gen) bucketsSince(tim time.Time) int64 {
+	return (tim.UTC().UnixNano() - gen.epochns) / BucketLen
 }
 
 // sleep sleeps till the start of next bucket. It expects gen.bucket to point
 // the bucket generator should wait (sleep) for.
 func (gen *Gen) sleep() {
-	next := gen.epochns + int64(gen.bucket)*BucketLen
+	next := gen.epochns + gen.bucket*BucketLen
 	sleep := time.Duration(next - gen.now().UTC().UnixNano())
 	time.Sleep(sleep)
 }
 
 // DecodeFID decodes zflake ID.
-func DecodeFID(fid uint64) map[string]uint64 {
+func DecodeFID(fid int64) map[string]int64 {
 	msb := fid >> 63
 	tim := fid >> (BitLenSeq + BitLenGID)
 	seq := fid & maskSeq >> BitLenGID
 	gid := fid & maskGID
-	return map[string]uint64{
+	return map[string]int64{
 		"fid": fid,
 		"msb": msb,
 		"tim": tim,
@@ -178,11 +177,11 @@ func DecodeFID(fid uint64) map[string]uint64 {
 }
 
 // EncodeFID returns Base62 string representation of the zflake ID.
-func EncodeFID(fid uint64) string {
+func EncodeFID(fid int64) string {
 	return base62.Encode(fid)
 }
 
-// DecodeSID decodes Base62 representation of the zflake ID back to uint64.
-func DecodeSID(sid string) (uint64, error) {
+// DecodeSID decodes Base62 representation of the zflake ID back to int64.
+func DecodeSID(sid string) (int64, error) {
 	return base62.Decode(sid)
 }

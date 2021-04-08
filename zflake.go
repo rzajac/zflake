@@ -28,10 +28,10 @@ const (
 	BucketLen = int64(10 * time.Millisecond)
 
 	// BitLenTim number of bits assigned to time buckets.
-	BitLenTim = 39
+	BitLenTim = 38
 
 	// BitLenSeq number of bits assigned to sequence number.
-	BitLenSeq = 16
+	BitLenSeq = 13
 
 	// BitLenGID number of bits assigned to generator ID (GID).
 	BitLenGID = 63 - BitLenTim - BitLenSeq
@@ -49,6 +49,7 @@ const (
 	maskTim = int64((1<<(BitLenTim) - 1) << (BitLenSeq + BitLenGID))
 	maskSeq = int64((1<<BitLenSeq - 1) << BitLenGID)
 	maskGID = int64(1<<BitLenGID - 1)
+	seqMax  = uint16(1)<<BitLenSeq - 1
 )
 
 // GID is Gen constructor option setting generator ID.
@@ -126,10 +127,11 @@ func (gen *Gen) NextFID() int64 {
 	} else {
 		// Generating ID for the current bucket.
 		gen.seq += 1
-		if gen.seq == 0 {
+		if gen.seq > seqMax {
 			// We run out of IDs for current bucket.
 			// Sleep till we are in the next one.
 			gen.bucket++
+			gen.seq = 0
 			gen.sleep()
 		}
 	}

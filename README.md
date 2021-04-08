@@ -12,15 +12,15 @@ was less important than the ability to create a lot of IDs in a short time.
 
 The `zflake` bit assignment in int64 is as follows:
 
-    39 bits for time in units of 10 msec
-    16 bits for a sequence number
-     8 bits for a generator ID (GID)
+    38 bits for time in units of 10 msec
+    14 bits for a sequence number
+    11 bits for a generator ID (GID)
 
 `zflake` properties:
 
-- The lifetime of 174 years since the start of `zflake` epoch.
-- Can generate at most 2^16 IDs per 10ms for each generator ID.
-- Only 2^8 generators.
+- The lifetime of 87 years since the start of `zflake` epoch.
+- Can generate at most 2^14 IDs per 10ms for each generator ID.
+- 2^11 generators.
 - Ability to generate Base62 string representations of int64 IDs. 
 
 ## Installation
@@ -61,16 +61,16 @@ will **panic**.
 ## Decode `zflake` ID
 
 ```
-parts := zflake.DecodeFID(59061089258255360)
-fmt.Println(parts) // map[fid:59061089258255360 gid:0 msb:0 seq:18740 tim:3520315245]
+parts := zflake.DecodeFID(134362890512629802)
+fmt.Println(parts) // map[fid:134362890512629802 gid:42 msb:0 seq:0 tim:4004326180]
 ```
 
 ## Benchmark
 
 ```
 Benchmark_zflake
-Benchmark_zflake_fid-12     7974894      155 ns/op      0 B/op      0 allocs/op
-Benchmark_zflake_sid-12     6168337      200 ns/op     16 B/op      1 allocs/op
+Benchmark_zflake_fid-12     1973349      608 ns/op      0 B/op      0 allocs/op
+Benchmark_zflake_sid-12     1967682      610 ns/op     16 B/op      1 allocs/op
 ```
 
 ## License

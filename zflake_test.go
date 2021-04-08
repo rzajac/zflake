@@ -25,7 +25,7 @@ func Test_NewGen(t *testing.T) {
 	assert.NotNil(t, flk)
 
 	parts := DecodeFID(fid0)
-	assert.Exactly(t, int64(0x1000000), parts["fid"])
+	assert.Exactly(t, int64(0x2000000), parts["fid"])
 	assert.Exactly(t, int64(0), parts["msb"])
 	assert.Exactly(t, int64(1), parts["tim"])
 	assert.Exactly(t, int64(0), parts["seq"])
@@ -86,7 +86,7 @@ func Test_Gen_parallel(t *testing.T) {
 	flk := NewGen()
 
 	// --- Then ---
-	fidC := make(chan int64, 1000)
+	fidC := make(chan int64, totalIDs)
 	for i := 0; i < generators; i++ {
 		go func() {
 			for i := 0; i < idPerGen; i++ {
@@ -98,6 +98,7 @@ func Test_Gen_parallel(t *testing.T) {
 	for i := 0; i < totalIDs; i++ {
 		id := <-fidC
 		if _, ok := set[id]; ok {
+			t.Log(DecodeFID(id))
 			t.Fatal("duplicated id")
 		}
 		set[id] = struct{}{}
@@ -117,15 +118,15 @@ func Test_Gen_NextSID_DecodeFID(t *testing.T) {
 	sid0 := flk.NextSID()
 
 	// --- Then ---
-	assert.Exactly(t, "18OWG", sid0)
+	assert.Exactly(t, "2Gn2W", sid0)
 
 	fid0, err := DecodeSID(sid0)
 	assert.NoError(t, err)
-	assert.Exactly(t, int64(0x1000000), fid0)
+	assert.Exactly(t, int64(0x2000000), fid0)
 }
 
 func Test_EncodeFID(t *testing.T) {
-	assert.Exactly(t, "18OWG", EncodeFID(0x1000000))
+	assert.Exactly(t, "2Gn2W", EncodeFID(0x2000000))
 }
 
 func Benchmark_zflake_fid(b *testing.B) {

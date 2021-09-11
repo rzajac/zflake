@@ -12,15 +12,16 @@ was less important than the ability to create a lot of IDs in a short time.
 
 The `zflake` bit assignment in int64 is as follows:
 
+     1 bit (most significant) reserved
     38 bits for time in units of 10 msec
-    14 bits for a sequence number
-    11 bits for a generator ID (GID)
+    13 bits for a sequence number
+    12 bits for a generator ID (GID)
 
 `zflake` properties:
 
-- The lifetime of 87 years since the start of `zflake` epoch.
-- Can generate at most 2^14 IDs per 10ms for each generator ID.
-- 2^11 generators.
+- The lifetime of ~87 years since the start of `zflake` epoch.
+- Can generate at most 2^13 (8192) IDs per 10ms for each generator ID.
+- 2^12 (4096) generators.
 - Ability to generate Base62 string representations of int64 IDs. 
 
 ## Installation

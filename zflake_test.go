@@ -46,6 +46,14 @@ func Test_NewGen_setGID(t *testing.T) {
 	assert.Exactly(t, int64(42), parts["gid"])
 }
 
+func Test_GID_panics(t *testing.T) {
+	// --- When ---
+	fn := func() { NewGen(GID(10000)) }
+
+	// --- Then ---
+	assert.PanicsWithValue(t, "zflake GID out of bounds", fn)
+}
+
 func Test_NewGen_epochInTheFuture(t *testing.T) {
 	// --- When ---
 	flk := NewGen(Epoch(time.Now().Add(time.Hour)))
@@ -72,7 +80,7 @@ func Test_Gen_NextFID_outOfTime(t *testing.T) {
 	flk.NextFID()
 
 	// --- Then ---
-	assert.PanicsWithValue(t, "over the time limit", func() { flk.NextFID() })
+	assert.PanicsWithValue(t, "zflake over the time limit", func() { flk.NextFID() })
 }
 
 func Test_Gen_parallel(t *testing.T) {
@@ -129,6 +137,17 @@ func Test_EncodeFID(t *testing.T) {
 	assert.Exactly(t, "2Gn2W", EncodeFID(0x2000000))
 }
 
+func Test_DefaultEpoch(t *testing.T) {
+	// --- Given ---
+	exp := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	// --- When ---
+	got := time.Unix(0, DefaultEpoch)
+
+	// --- Then ---
+	assert.True(t, exp.Equal(got))
+}
+
 func Benchmark_zflake_fid(b *testing.B) {
 	b.StopTimer()
 	flk := NewGen()
@@ -154,6 +173,27 @@ func Benchmark_zflake_sid(b *testing.B) {
 	}
 	_ = id
 }
+
+// func Test_math(t *testing.T) {
+// 	fmt.Println("Number of bits:", 1+38+13+12)
+//
+// 	buckets := int64(1<<BitLenTim - 1)
+// 	fmt.Printf("Max time buckets: %d, %b\n", buckets, buckets)
+//
+// 	maxTime := time.Duration(buckets) * 10 * time.Millisecond
+// 	fmt.Println("Max time: ", maxTime)
+// 	fmt.Printf("Max time in years: ~%d\n", int64(maxTime.Truncate(time.Hour).Hours())/24/365)
+//
+// 	maxGen := 1<<BitLenGID - 1
+// 	fmt.Printf("Max generators %d, %b\n", maxGen, maxGen)
+// 	maxGen = int(math.Pow(2, 12))
+// 	fmt.Printf("Max generators %d, %b\n", maxGen, maxGen)
+//
+// 	maxSeq := 1<<BitLenSeq - 1
+// 	fmt.Printf("Max seq %d, %b\n", maxSeq, maxSeq)
+// 	maxSeq = int(math.Pow(2, 13))
+// 	fmt.Printf("Max seq %d, %b\n", maxSeq, maxSeq)
+// }
 
 // printInt64 prints binary representation of int64 number.
 func printInt64(fid int64) {

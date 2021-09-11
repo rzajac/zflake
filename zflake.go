@@ -2,15 +2,17 @@
 // by Twitter's Snowflake.
 //
 // A zflake ID is composed of
-//   39 bits for time in units of 10 msec
-//   16 bits for a sequence number
-//    8 bits for a generator ID (GID)
+//    1 bit (most significant) reserved
+//   38 bits for time in units of 10 msec
+//   13 bits for a sequence number
+//   12 bits for a generator ID (GID)
 //
 // Above bit assigment dictate following zflake properties:
 //
-// - The lifetime of 174 years since the start of zflake epoch.
-// - Can generate at most 2^16 IDs per 10ms for each generator ID.
-// - Only 2^8 generators.
+// - The lifetime of ~87 years since the start of `zflake` epoch.
+// - Can generate at most 2^13 (8192) IDs per 10ms for each generator ID.
+// - 2^12 (4096) generators.
+// - Ability to generate Base62 string representations of int64 IDs.
 //
 package zflake
 
@@ -41,7 +43,7 @@ const (
 	DefaultEpoch int64 = 1577836800000000000
 
 	// DefaultGID represents default generator ID.
-	DefaultGID byte = 0
+	DefaultGID uint16 = 0
 )
 
 // Bit masks.
@@ -49,16 +51,21 @@ const (
 	maskTim = int64((1<<(BitLenTim) - 1) << (BitLenSeq + BitLenGID))
 	maskSeq = int64((1<<BitLenSeq - 1) << BitLenGID)
 	maskGID = int64(1<<BitLenGID - 1)
-	seqMax  = uint16(1)<<BitLenSeq - 1
+	seqMax  = uint16(1<<BitLenSeq - 1)
+	gidMax  = uint16(1<<BitLenGID - 1)
 )
 
-// GID is Gen constructor option setting generator ID.
+// GID is Gen constructor option setting generator ID. Will panic if gid is
+// greater than 4095.
 //
-// If creating multiple generators it's up to the user to provide ID which is
-// unique across generators/machines.
-func GID(mid byte) func(*Gen) {
+// It is caller responsibility to provide ID which is unique across
+// generators / machines.
+func GID(gid uint16) func(*Gen) {
+	if gid > gidMax {
+		panic("zflake GID out of bounds")
+	}
 	return func(flake *Gen) {
-		flake.gid = mid
+		flake.gid = gid
 	}
 }
 
@@ -83,7 +90,7 @@ func Clock(clk clock.Clock) func(*Gen) {
 type Gen struct {
 	epoch   int64       // Number of zflake time buckets since Unix Epoch.
 	epochns int64       // Generator epoch as nanoseconds.
-	gid     byte        // Generator ID.
+	gid     uint16      // Generator ID.
 	bucket  int64       // Current 10ms time bucket since epoch.
 	seq     uint16      // Number of generated IDs in current time bucket.
 	now     clock.Clock // Function returning current time.
@@ -137,7 +144,7 @@ func (gen *Gen) NextFID() int64 {
 	}
 
 	if gen.bucket >= 1<<BitLenTim {
-		panic("over the time limit")
+		panic("zflake over the time limit")
 	}
 
 	return gen.bucket<<(BitLenSeq+BitLenGID) |

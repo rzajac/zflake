@@ -2,10 +2,11 @@
 // by Twitter's Snowflake.
 //
 // A zflake ID is composed of
-//    1 bit (most significant) reserved
-//   38 bits for time in units of 10 msec
-//   13 bits for a sequence number
-//   12 bits for a generator ID (GID)
+//
+//	 1 bit (most significant) reserved
+//	38 bits for time in units of 10 msec
+//	13 bits for a sequence number
+//	12 bits for a generator ID (GID)
 //
 // Above bit assigment dictate following zflake properties:
 //
@@ -13,14 +14,11 @@
 // - Can generate at most 2^13 (8192) IDs per 10ms for each generator ID.
 // - 2^12 (4096) generators.
 // - Ability to generate Base62 string representations of int64 IDs.
-//
 package zflake
 
 import (
 	"sync"
 	"time"
-
-	"github.com/rzajac/clock"
 
 	"github.com/rzajac/zflake/internal/base62"
 )
@@ -80,7 +78,7 @@ func Epoch(epoch time.Time) func(*Gen) {
 // Clock is Flake constructor option injecting custom clock.
 //
 // This option is mostly used to test zflake behaviour.
-func Clock(clk clock.Clock) func(*Gen) {
+func Clock(clk func() time.Time) func(*Gen) {
 	return func(flake *Gen) {
 		flake.now = clk
 	}
@@ -88,13 +86,13 @@ func Clock(clk clock.Clock) func(*Gen) {
 
 // Gen represents distributed unique ID generator.
 type Gen struct {
-	epoch   int64       // Number of zflake time buckets since Unix Epoch.
-	epochns int64       // Generator epoch as nanoseconds.
-	gid     uint16      // Generator ID.
-	bucket  int64       // Current 10ms time bucket since epoch.
-	seq     uint16      // Number of generated IDs in current time bucket.
-	now     clock.Clock // Function returning current time.
-	mx      *sync.Mutex // Guards generator.
+	epoch   int64            // Number of zflake time buckets since Unix Epoch.
+	epochns int64            // Generator epoch as nanoseconds.
+	gid     uint16           // Generator ID.
+	bucket  int64            // Current 10ms time bucket since epoch.
+	seq     uint16           // Number of generated IDs in current time bucket.
+	now     func() time.Time // Function returning current time.
+	mx      *sync.Mutex      // Guards generator.
 }
 
 // NewGen returns a new generator with default configuration.
@@ -103,7 +101,7 @@ func NewGen(opts ...func(*Gen)) *Gen {
 	gen := &Gen{
 		gid: DefaultGID,
 		seq: uint16(1<<BitLenSeq - 1),
-		now: clock.Now,
+		now: time.Now,
 		mx:  &sync.Mutex{},
 	}
 

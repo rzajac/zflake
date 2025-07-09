@@ -1,8 +1,5 @@
 module github.com/rzajac/zflake
 
-go 1.15
+go 1.24.1
 
-require (
-	github.com/rzajac/clock v0.2.0
-	github.com/stretchr/testify v1.7.0
-)
+require github.com/ctx42/testing v0.28.1

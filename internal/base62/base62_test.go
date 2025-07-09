@@ -3,7 +3,7 @@ package base62
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/ctx42/testing/pkg/assert"
 )
 
 func Test_Encode_Decode(t *testing.T) {
@@ -27,8 +27,8 @@ func Test_Encode_Decode(t *testing.T) {
 
 			// --- Then ---
 			assert.NoError(t, err)
-			assert.Exactly(t, tc.fid, fid)
-			assert.Exactly(t, tc.sid, sid)
+			assert.Equal(t, tc.fid, fid)
+			assert.Equal(t, tc.sid, sid)
 		})
 	}
 }
@@ -39,7 +39,7 @@ func Test_Decode_checkAlphabet(t *testing.T) {
 
 	// --- Then ---
 	assert.ErrorIs(t, err, ErrInvalidSID)
-	assert.Exactly(t, int64(0), fid)
+	assert.Equal(t, int64(0), fid)
 }
 
 func Test_Encode_Zero(t *testing.T) {
@@ -47,11 +47,11 @@ func Test_Encode_Zero(t *testing.T) {
 	sid := Encode(0)
 
 	// --- Then ---
-	assert.Exactly(t, "0", sid)
+	assert.Equal(t, "0", sid)
 
 	fid, err := Decode("0")
 	assert.NoError(t, err)
-	assert.Exactly(t, int64(0), fid)
+	assert.Equal(t, int64(0), fid)
 }
 
 func BenchmarkBase62Encode(b *testing.B) {

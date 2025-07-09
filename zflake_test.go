@@ -6,13 +6,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rzajac/clock"
-	"github.com/stretchr/testify/assert"
+	"github.com/ctx42/testing/pkg/assert"
+	"github.com/ctx42/testing/pkg/kit/timekit"
 )
 
 func Test_NewGen(t *testing.T) {
 	// --- Given ---
-	clk := clock.Deterministic(
+	clk := timekit.ClockDeterministic(
 		time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
 		time.Millisecond,
 	)
@@ -25,11 +25,11 @@ func Test_NewGen(t *testing.T) {
 	assert.NotNil(t, flk)
 
 	parts := DecodeFID(fid0)
-	assert.Exactly(t, int64(0x2000000), parts["fid"])
-	assert.Exactly(t, int64(0), parts["msb"])
-	assert.Exactly(t, int64(1), parts["tim"])
-	assert.Exactly(t, int64(0), parts["seq"])
-	assert.Exactly(t, int64(0), parts["gid"])
+	assert.Equal(t, int64(0x2000000), parts["fid"])
+	assert.Equal(t, int64(0), parts["msb"])
+	assert.Equal(t, int64(1), parts["tim"])
+	assert.Equal(t, int64(0), parts["seq"])
+	assert.Equal(t, int64(0), parts["gid"])
 }
 
 func Test_NewGen_setGID(t *testing.T) {
@@ -43,15 +43,18 @@ func Test_NewGen_setGID(t *testing.T) {
 	assert.NotNil(t, flk)
 
 	parts := DecodeFID(fid0)
-	assert.Exactly(t, int64(42), parts["gid"])
+	assert.Equal(t, int64(42), parts["gid"])
 }
 
 func Test_GID_panics(t *testing.T) {
 	// --- When ---
 	fn := func() { NewGen(GID(10000)) }
 
+	// --- When ---
+	msg := assert.PanicMsg(t, fn)
+
 	// --- Then ---
-	assert.PanicsWithValue(t, "zflake GID out of bounds", fn)
+	assert.Equal(t, "zflake GID out of bounds", *msg)
 }
 
 func Test_NewGen_epochInTheFuture(t *testing.T) {
@@ -72,7 +75,7 @@ func Test_Gen_NextFID_outOfTime(t *testing.T) {
 	endTimeNS := epoch.UTC().UnixNano() + endBucket*BucketLen
 	endTime := time.Unix(0, endTimeNS)
 
-	clk := clock.Deterministic(endTime, 10*time.Millisecond)
+	clk := timekit.ClockDeterministic(endTime, 10*time.Millisecond)
 	flk := NewGen(Clock(clk))
 
 	// --- When ---
@@ -80,7 +83,8 @@ func Test_Gen_NextFID_outOfTime(t *testing.T) {
 	flk.NextFID()
 
 	// --- Then ---
-	assert.PanicsWithValue(t, "zflake over the time limit", func() { flk.NextFID() })
+	msg := assert.PanicMsg(t, func() { flk.NextFID() })
+	assert.Equal(t, "zflake over the time limit", *msg)
 }
 
 func Test_Gen_parallel(t *testing.T) {
@@ -111,12 +115,12 @@ func Test_Gen_parallel(t *testing.T) {
 		}
 		set[id] = struct{}{}
 	}
-	assert.Exactly(t, idPerGen*generators, len(set))
+	assert.Equal(t, idPerGen*generators, len(set))
 }
 
 func Test_Gen_NextSID_DecodeFID(t *testing.T) {
 	// --- Given ---
-	clk := clock.Deterministic(
+	clk := timekit.ClockDeterministic(
 		time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC),
 		time.Millisecond,
 	)
@@ -126,15 +130,15 @@ func Test_Gen_NextSID_DecodeFID(t *testing.T) {
 	sid0 := flk.NextSID()
 
 	// --- Then ---
-	assert.Exactly(t, "2Gn2W", sid0)
+	assert.Equal(t, "2Gn2W", sid0)
 
 	fid0, err := DecodeSID(sid0)
 	assert.NoError(t, err)
-	assert.Exactly(t, int64(0x2000000), fid0)
+	assert.Equal(t, int64(0x2000000), fid0)
 }
 
 func Test_EncodeFID(t *testing.T) {
-	assert.Exactly(t, "2Gn2W", EncodeFID(0x2000000))
+	assert.Equal(t, "2Gn2W", EncodeFID(0x2000000))
 }
 
 func Test_DefaultEpoch(t *testing.T) {
